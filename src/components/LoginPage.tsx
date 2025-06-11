@@ -1,5 +1,5 @@
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { toast } from '@/hooks/use-toast';
 import LoginLoadingAnimation from './LoginLoadingAnimation';
 
 const LoginPage = () => {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -30,6 +31,9 @@ const LoginPage = () => {
         title: isLogin ? "Welcome back!" : "Account created!",
         description: `Successfully ${isLogin ? 'logged in' : 'signed up'}`,
       });
+      
+      // Navigate to dashboard after successful login/signup
+      navigate('/dashboard');
     }, 2500);
   };
 
