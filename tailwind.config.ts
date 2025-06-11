@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -84,11 +85,41 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'float-1': {
+					'0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+					'50%': { transform: 'translateY(-20px) rotate(180deg)' }
+				},
+				'float-2': {
+					'0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+					'50%': { transform: 'translateY(-30px) rotate(-180deg)' }
+				},
+				'float-3': {
+					'0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+					'50%': { transform: 'translateY(-25px) rotate(90deg)' }
+				},
+				'float-4': {
+					'0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+					'50%': { transform: 'translateY(-35px) rotate(-90deg)' }
+				},
+				'float-5': {
+					'0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+					'50%': { transform: 'translateY(-15px) rotate(270deg)' }
+				},
+				'float-6': {
+					'0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+					'50%': { transform: 'translateY(-40px) rotate(-270deg)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'float-1': 'float-1 4s ease-in-out infinite',
+				'float-2': 'float-2 5s ease-in-out infinite',
+				'float-3': 'float-3 4.5s ease-in-out infinite',
+				'float-4': 'float-4 3.5s ease-in-out infinite',
+				'float-5': 'float-5 5.5s ease-in-out infinite',
+				'float-6': 'float-6 4.2s ease-in-out infinite'
 			}
 		}
 	},
