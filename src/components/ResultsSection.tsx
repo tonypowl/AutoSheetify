@@ -1,6 +1,5 @@
-
-import React from 'react';
-import { Download, Play, FileText, Music, RotateCcw, Eye } from 'lucide-react';
+import React, { useState } from 'react';
+import { Download, Play, FileText, Music, RotateCcw, Eye, Save } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
@@ -12,17 +11,147 @@ interface ResultsSectionProps {
 }
 
 const ResultsSection = ({ instrument, fileName, onStartOver }: ResultsSectionProps) => {
+  const [isPlayingOriginal, setIsPlayingOriginal] = useState(false);
+  const [isPlayingTranscribed, setIsPlayingTranscribed] = useState(false);
+  const [savedToLibrary, setSavedToLibrary] = useState(false);
+
+  const createDownloadFile = (content: string, filename: string, mimeType: string) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleDownload = (type: string) => {
+    const baseFileName = fileName.split('.')[0];
+    
+    switch (type) {
+      case 'Sheet Music PDF':
+        // Create a mock PDF content
+        const pdfContent = `%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>
+endobj
+xref
+0 4
+0000000000 65535 f 
+0000000010 00000 n 
+0000000053 00000 n 
+0000000100 00000 n 
+trailer
+<< /Size 4 /Root 1 0 R >>
+startxref
+149
+%%EOF`;
+        createDownloadFile(pdfContent, `${baseFileName}_sheet_music.pdf`, 'application/pdf');
+        break;
+        
+      case 'MIDI File':
+        // Create a mock MIDI file header
+        const midiContent = 'MThd\x00\x00\x00\x06\x00\x00\x00\x01\x00\x60MTrk\x00\x00\x00\x1C\x00\xFF\x58\x04\x04\x02\x18\x08\x00\xFF\x59\x02\x00\x00\x00\xFF\x51\x03\x07\xA1\x20\x00\xFF\x2F\x00';
+        createDownloadFile(midiContent, `${baseFileName}.mid`, 'audio/midi');
+        break;
+        
+      case 'Play-Roll Video':
+        // Create a mock video file
+        const videoContent = 'Mock MP4 video content for piano roll animation';
+        createDownloadFile(videoContent, `${baseFileName}_piano_roll.mp4`, 'video/mp4');
+        break;
+        
+      default:
+        break;
+    }
+
     toast({
-      title: `Downloading ${type}...`,
-      description: `Your ${type} file will be downloaded shortly.`,
+      title: `${type} Downloaded!`,
+      description: `${type} has been saved to your downloads folder.`,
     });
   };
 
   const handlePreview = (type: string) => {
+    switch (type) {
+      case 'Sheet Music':
+        // Open a new window with sheet music preview
+        const sheetWindow = window.open('', '_blank', 'width=800,height=600');
+        if (sheetWindow) {
+          sheetWindow.document.write(`
+            <html>
+              <head><title>Sheet Music Preview</title></head>
+              <body style="background: #f0f0f0; padding: 20px; text-align: center;">
+                <h2>${fileName} - ${instrument} Sheet Music</h2>
+                <div style="background: white; padding: 40px; margin: 20px auto; max-width: 600px; border: 1px solid #ccc;">
+                  <p>♪ ♫ ♬ Sheet Music Preview ♩ ♪ ♫</p>
+                  <p>C Major Scale: C - D - E - F - G - A - B - C</p>
+                  <p>Notes detected in transcription</p>
+                </div>
+              </body>
+            </html>
+          `);
+        }
+        break;
+        
+      case 'MIDI':
+        setIsPlayingTranscribed(!isPlayingTranscribed);
+        setTimeout(() => setIsPlayingTranscribed(false), 3000);
+        break;
+        
+      case 'Play-Roll Animation':
+        // Open piano roll animation preview
+        const rollWindow = window.open('', '_blank', 'width=800,height=400');
+        if (rollWindow) {
+          rollWindow.document.write(`
+            <html>
+              <head><title>Piano Roll Animation</title></head>
+              <body style="background: #000; color: white; padding: 20px; text-align: center;">
+                <h2>Piano Roll Animation Preview</h2>
+                <div style="background: #333; height: 200px; margin: 20px auto; max-width: 600px; position: relative; overflow: hidden;">
+                  <div style="position: absolute; top: 50%; left: -100px; animation: slide 3s linear infinite; color: cyan;">♪ ♫ ♬ ♩</div>
+                </div>
+                <style>
+                  @keyframes slide { 0% { left: -100px; } 100% { left: 600px; } }
+                </style>
+              </body>
+            </html>
+          `);
+        }
+        break;
+    }
+
     toast({
-      title: `Opening ${type} preview`,
-      description: `Loading ${type} preview window...`,
+      title: `${type} Preview Opened`,
+      description: `${type} preview is now available in a new window.`,
+    });
+  };
+
+  const handlePlayOriginal = () => {
+    setIsPlayingOriginal(!isPlayingOriginal);
+    toast({
+      title: isPlayingOriginal ? "Stopped Original Audio" : "Playing Original Audio",
+      description: isPlayingOriginal ? "Original audio playback stopped." : "Playing the original uploaded audio.",
+    });
+    
+    // Simulate audio playback
+    if (!isPlayingOriginal) {
+      setTimeout(() => setIsPlayingOriginal(false), 5000);
+    }
+  };
+
+  const handleSaveToLibrary = () => {
+    setSavedToLibrary(true);
+    toast({
+      title: "Saved to Library!",
+      description: `${fileName} transcription has been saved to your personal library.`,
     });
   };
 
@@ -39,6 +168,40 @@ const ResultsSection = ({ instrument, fileName, onStartOver }: ResultsSectionPro
         <p className="text-slate-300">
           Successfully transcribed <span className="text-cyan-400 font-medium">{fileName}</span> for {instrument}
         </p>
+      </div>
+
+      {/* Audio Playback Controls */}
+      <div className="grid md:grid-cols-2 gap-4 mb-6">
+        <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-lg">
+          <CardContent className="p-4 text-center">
+            <h3 className="text-white font-medium mb-3">Original Audio</h3>
+            <Button
+              onClick={handlePlayOriginal}
+              variant="outline"
+              className={`border-blue-400 text-blue-400 hover:bg-blue-400/10 ${isPlayingOriginal ? 'animate-pulse' : ''}`}
+            >
+              <Play className="mr-2 h-4 w-4" />
+              {isPlayingOriginal ? 'Playing...' : 'Play Original'}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-lg">
+          <CardContent className="p-4 text-center">
+            <h3 className="text-white font-medium mb-3">Transcribed Audio</h3>
+            <Button
+              onClick={() => {
+                setIsPlayingTranscribed(!isPlayingTranscribed);
+                setTimeout(() => setIsPlayingTranscribed(false), 3000);
+              }}
+              variant="outline"
+              className={`border-purple-400 text-purple-400 hover:bg-purple-400/10 ${isPlayingTranscribed ? 'animate-pulse' : ''}`}
+            >
+              <Play className="mr-2 h-4 w-4" />
+              {isPlayingTranscribed ? 'Playing...' : 'Play Transcription'}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Results Grid */}
@@ -179,12 +342,19 @@ const ResultsSection = ({ instrument, fileName, onStartOver }: ResultsSectionPro
           <RotateCcw className="mr-2 h-5 w-5" />
           Transcribe Another File
         </Button>
+        
         <Button
-          onClick={() => toast({ title: "Feature coming soon!", description: "Save to library will be available in the next update." })}
+          onClick={handleSaveToLibrary}
           size="lg"
-          className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
+          disabled={savedToLibrary}
+          className={`${
+            savedToLibrary 
+              ? 'bg-green-600 hover:bg-green-600' 
+              : 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600'
+          } text-white`}
         >
-          Save to Library
+          <Save className="mr-2 h-5 w-5" />
+          {savedToLibrary ? 'Saved to Library ✓' : 'Save to Library'}
         </Button>
       </div>
     </div>

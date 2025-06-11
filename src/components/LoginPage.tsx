@@ -32,8 +32,8 @@ const LoginPage = () => {
         description: `Successfully ${isLogin ? 'logged in' : 'signed up'}`,
       });
       
-      // Navigate to dashboard after successful login/signup
-      navigate('/dashboard');
+      // Navigate to main AutoSheetify page after successful login/signup
+      navigate('/');
     }, 2500);
   };
 
