@@ -7,9 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Music, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import LoginLoadingAnimation from './LoginLoadingAnimation';
+import { useAuth } from '@/contexts/AuthContext';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -27,6 +29,13 @@ const LoginPage = () => {
     // Simulate authentication process
     setTimeout(() => {
       setIsLoading(false);
+      
+      // Extract username from email (part before @)
+      const username = formData.email.split('@')[0];
+      
+      // Update auth context
+      login(formData.email, username);
+      
       toast({
         title: isLogin ? "Welcome back!" : "Account created!",
         description: `Successfully ${isLogin ? 'logged in' : 'signed up'}`,
