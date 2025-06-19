@@ -30,23 +30,17 @@ const HowItWorks = () => {
       {/* Steps */}
       <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center max-w-6xl mx-auto px-6 gap-20 md:gap-0">
         <Step
-          still="/images/piano-still.png"
-          gif="/images/piano.gif"
-          title="1. Upload your Music"
+          gif="/images/keyboard.gif"
           description="Record your performance, upload an audio file or use a YouTube link."
           borderColor="border-cyan-400"
         />
         <Step
-          still="/images/brain-still.png"
-          gif="/images/brain.gif"
-          title="2. AI Magic ✨"
+          gif="/images/ai.gif"
           description="AutoSheetify AI listens to your music and transcribes it automatically."
           borderColor="border-purple-400"
         />
         <Step
-          still="/images/sheet-still.png"
-          gif="/images/sheet.gif"
-          title="3. View, Edit and Download"
+          gif="/images/music.gif"
           description="Export your transcription as Sheet Music, MIDI, MusicXML or GuitarPro."
           borderColor="border-pink-500"
         />
@@ -56,14 +50,12 @@ const HowItWorks = () => {
 };
 
 type StepProps = {
-  still: string;
   gif: string;
-  title: string;
   description: string;
   borderColor: string;
 };
 
-const Step = ({ still, gif, title, description, borderColor }: StepProps) => {
+const Step = ({gif, description, borderColor }: StepProps) => {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -73,12 +65,10 @@ const Step = ({ still, gif, title, description, borderColor }: StepProps) => {
       onMouseLeave={() => setHovered(false)}
     >
       <img
-        src={hovered ? gif : still}
-        alt={title}
+        src={gif}
         loading="lazy"
         className={`w-64 h-40 object-cover rounded-xl border-2 ${borderColor} shadow-lg transition-transform duration-300 group-hover:scale-105`}
       />
-      <h3 className="text-xl font-bold mt-6">{title}</h3>
       <p className="text-slate-400 mt-2 max-w-xs">{description}</p>
     </div>
   );
