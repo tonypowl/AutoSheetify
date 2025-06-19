@@ -1,44 +1,71 @@
-import React, { useState } from "react";
-import { motion } from "framer-motion";
+// HowItWorks.tsx
+import React from "react";
+import { motion, useMotionValue, useTransform } from "framer-motion";
+
+// Use relative paths to import the child components
+import SoundWave from "./ui/soundwave";
+import MusicalNotes from "./ui/musicalnotes";
 
 const HowItWorks = () => {
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const background = useTransform(
+    [mouseX, mouseY],
+    ([x, y]) =>
+      `radial-gradient(circle at ${x}px ${y}px, rgba(168, 85, 247, 0.15), transparent 40%)`
+  );
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    mouseX.set(e.clientX - rect.left);
+    mouseY.set(e.clientY - rect.top);
+  };
+
   return (
-    <section className="relative py-24 bg-black text-white overflow-hidden">
-      <h2 className="text-4xl font-bold text-center mb-20">How It Works</h2>
-
-      {/* Animated Line */}
+    // CHANGE: Updated background gradient to match the AutoSheetify logo theme
+    <section
+      onMouseMove={handleMouseMove}
+      className="relative py-24 bg-gradient-to-r from-indigo-950 to-purple-950 text-white overflow-hidden"
+    >
+      {/* Interactive background spotlight */}
       <motion.div
-        className="hidden md:block absolute top-[172px] left-[15%] right-[15%] h-1 z-0"
-        initial={{ width: 0, opacity: 0 }}
-        animate={{ width: "70%", opacity: 1 }}
-        transition={{ duration: 1.2, ease: [0.42, 0, 0.58, 1] }}
-      >
-        <div className="w-full h-full bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 rounded-full blur-sm shadow-lg" />
-      </motion.div>
+        className="absolute inset-0 z-0"
+        style={{ background }}
+      />
+      
+      {/* CHANGE: Added gradient text to match the AutoSheetify logo */}
+      <h2 className="relative z-10 text-5xl font-bold text-center mb-24 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+        How It Works
+      </h2>
 
-      {/* Moving Glowing Dot */}
-      <motion.div
-        className="hidden md:block absolute top-[170px] left-[15%] w-[70%] h-1 z-10"
-      >
-        <motion.div
-          className="w-4 h-4 bg-white rounded-full shadow-xl"
-          animate={{ x: ["0%", "100%"] }}
-          transition={{ duration: 3.5, ease: "linear", repeat: Infinity }}
-        />
-      </motion.div>
-
-      {/* Steps */}
-      <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center max-w-6xl mx-auto px-6 gap-20 md:gap-0">
+      {/* Steps Container - layout is centered and uses gap for spacing */}
+      <div className="relative z-10 flex flex-col md:flex-row justify-center items-center max-w-7xl mx-auto px-6 gap-8 md:gap-4">
+        {/* Step 1 */}
         <Step
           gif="/images/keyboard.gif"
           description="Record your performance, upload an audio file or use a YouTube link."
           borderColor="border-cyan-400"
         />
+
+        {/* --- Connector 1: Sound Wave --- */}
+        <div className="flex-1 flex items-center w-full md:w-auto hidden md:block">
+          <SoundWave />
+        </div>
+
+        {/* Step 2 */}
         <Step
           gif="/images/ai.gif"
           description="AutoSheetify AI listens to your music and transcribes it automatically."
           borderColor="border-purple-400"
         />
+
+        {/* --- Connector 2: Musical Notes --- */}
+        <div className="flex-1 flex items-center justify-center w-full md:w-auto hidden md:block">
+          <MusicalNotes />
+        </div>
+
+        {/* Step 3 */}
         <Step
           gif="/images/music.gif"
           description="Export your transcription as Sheet Music, MIDI, MusicXML or GuitarPro."
@@ -55,21 +82,22 @@ type StepProps = {
   borderColor: string;
 };
 
-const Step = ({gif, description, borderColor }: StepProps) => {
-  const [hovered, setHovered] = useState(false);
-
+const Step = ({ gif, description, borderColor }: StepProps) => {
   return (
-    <div
-      className="flex-1 flex flex-col items-center text-center group cursor-pointer"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <img
+    <div className="flex flex-col items-center text-center group md:w-1/4">
+      <motion.img
         src={gif}
         loading="lazy"
-        className={`w-64 h-40 object-cover rounded-xl border-2 ${borderColor} shadow-lg transition-transform duration-300 group-hover:scale-105`}
+        alt={description}
+        className={`w-full max-w-[280px] h-44 object-cover rounded-xl border-2 ${borderColor} shadow-lg`}
+        whileHover={{ scale: 1.05, boxShadow: `0px 0px 30px rgba(${
+            borderColor === 'border-cyan-400' ? '56, 189, 248' :
+            borderColor === 'border-purple-400' ? '192, 132, 252' :
+            '236, 72, 153'
+        }, 0.5)` }}
+        transition={{ type: 'spring', stiffness: 300 }}
       />
-      <p className="text-slate-400 mt-2 max-w-xs">{description}</p>
+      <p className="text-slate-300 mt-5 max-w-xs text-lg">{description}</p>
     </div>
   );
 };
