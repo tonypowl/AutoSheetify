@@ -7,7 +7,6 @@ import * as THREE from 'three';
 // 3D Floating Note Component
 const FloatingNote = ({ position, note, color, speed = 1 }: { position: [number, number, number], note: string, color: string, speed?: number }) => {
   const meshRef = useRef<THREE.Mesh>(null);
-  const trailRef = useRef<any>(null);
 
   useFrame((state) => {
     if (meshRef.current) {
@@ -24,7 +23,6 @@ const FloatingNote = ({ position, note, color, speed = 1 }: { position: [number,
       floatingRange={[0, 0.5]}
     >
       <Trail
-        ref={trailRef}
         width={2}
         length={8}
         color={color}
@@ -37,7 +35,6 @@ const FloatingNote = ({ position, note, color, speed = 1 }: { position: [number,
           color={color}
           anchorX="center"
           anchorY="middle"
-          font="/fonts/inter.woff"
         >
           {note}
           <meshStandardMaterial
@@ -55,7 +52,7 @@ const FloatingNote = ({ position, note, color, speed = 1 }: { position: [number,
 
 // Curving Wave Lines Component
 const WaveLines = () => {
-  const linesRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null);
 
   const curves = useMemo(() => {
     const curveData = [];
@@ -67,34 +64,28 @@ const WaveLines = () => {
         new THREE.Vector3(5, Math.sin(i + 1) * 2, 0),
         new THREE.Vector3(10, -1 + i * 0.5, -3),
       ]);
-      curveData.push(curve);
+      const points = curve.getPoints(50);
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      curveData.push({ geometry, color: i % 2 === 0 ? '#06b6d4' : '#8b5cf6' });
     }
     return curveData;
   }, []);
 
   useFrame((state) => {
-    if (linesRef.current) {
-      linesRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.3) * 0.1;
+    if (groupRef.current) {
+      groupRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.3) * 0.1;
     }
   });
 
   return (
-    <group ref={linesRef}>
-      {curves.map((curve, index) => {
-        const points = curve.getPoints(50);
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        
-        return (
-          <line key={index} geometry={geometry}>
-            <lineBasicMaterial
-              color={index % 2 === 0 ? '#06b6d4' : '#8b5cf6'}
-              transparent
-              opacity={0.3}
-              linewidth={2}
-            />
-          </line>
-        );
-      })}
+    <group ref={groupRef}>
+      {curves.map((curveData, index) => (
+        <primitive key={index} object={new THREE.Line(curveData.geometry, new THREE.LineBasicMaterial({
+          color: curveData.color,
+          transparent: true,
+          opacity: 0.3,
+        }))} />
+      ))}
     </group>
   );
 };
