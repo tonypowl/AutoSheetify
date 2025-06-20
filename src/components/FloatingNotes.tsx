@@ -23,15 +23,15 @@ const FloatingNote = ({ position, note, color, speed = 1 }: { position: [number,
       floatingRange={[0, 0.5]}
     >
       <Trail
-        width={2}
-        length={8}
+        width={3}
+        length={12}
         color={color}
         attenuation={(t) => t * t}
       >
         <Text
           ref={meshRef}
           position={position}
-          fontSize={0.8}
+          fontSize={1.2}
           color={color}
           anchorX="center"
           anchorY="middle"
@@ -39,10 +39,10 @@ const FloatingNote = ({ position, note, color, speed = 1 }: { position: [number,
           {note}
           <meshStandardMaterial
             emissive={color}
-            emissiveIntensity={0.5}
+            emissiveIntensity={0.8}
             color={color}
             transparent
-            opacity={0.9}
+            opacity={1}
           />
         </Text>
       </Trail>
@@ -56,7 +56,7 @@ const WaveLines = () => {
 
   const curves = useMemo(() => {
     const curveData = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 8; i++) {
       const curve = new THREE.CatmullRomCurve3([
         new THREE.Vector3(-10, -2 + i * 1, -5),
         new THREE.Vector3(-5, Math.sin(i) * 2, 0),
@@ -83,7 +83,7 @@ const WaveLines = () => {
         <primitive key={index} object={new THREE.Line(curveData.geometry, new THREE.LineBasicMaterial({
           color: curveData.color,
           transparent: true,
-          opacity: 0.3,
+          opacity: 0.6,
         }))} />
       ))}
     </group>
@@ -95,7 +95,7 @@ const ParticleField = () => {
   const particlesRef = useRef<THREE.Points>(null);
 
   const particles = useMemo(() => {
-    const count = 200;
+    const count = 300;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
     
@@ -143,10 +143,10 @@ const ParticleField = () => {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.02}
+        size={0.04}
         vertexColors
         transparent
-        opacity={0.6}
+        opacity={0.9}
         sizeAttenuation
         blending={THREE.AdditiveBlending}
       />
@@ -157,23 +157,26 @@ const ParticleField = () => {
 // Main 3D Scene Component
 const Scene3D = () => {
   const notes = [
-    { symbol: '♪', position: [-3, 2, 0] as [number, number, number], color: '#06b6d4', speed: 1.2 },
-    { symbol: '♫', position: [3, -1, 1] as [number, number, number], color: '#8b5cf6', speed: 0.8 },
-    { symbol: '♬', position: [-2, -2, -1] as [number, number, number], color: '#06b6d4', speed: 1.5 },
-    { symbol: '♩', position: [2, 3, 2] as [number, number, number], color: '#a855f7', speed: 0.9 },
-    { symbol: '♭', position: [-4, 0, -2] as [number, number, number], color: '#0891b2', speed: 1.1 },
-    { symbol: '♯', position: [4, 1, -1] as [number, number, number], color: '#7c3aed', speed: 1.3 },
+    { symbol: '♪', position: [-3, 2, 0] as [number, number, number], color: '#00d4ff', speed: 1.2 },
+    { symbol: '♫', position: [3, -1, 1] as [number, number, number], color: '#a855f7', speed: 0.8 },
+    { symbol: '♬', position: [-2, -2, -1] as [number, number, number], color: '#00bcd4', speed: 1.5 },
+    { symbol: '♩', position: [2, 3, 2] as [number, number, number], color: '#c084fc', speed: 0.9 },
+    { symbol: '♭', position: [-4, 0, -2] as [number, number, number], color: '#22d3ee', speed: 1.1 },
+    { symbol: '♯', position: [4, 1, -1] as [number, number, number], color: '#9333ea', speed: 1.3 },
     { symbol: '𝄞', position: [0, -3, 1] as [number, number, number], color: '#06b6d4', speed: 0.7 },
-    { symbol: '𝄢', position: [-1, 4, 0] as [number, number, number], color: '#8b5cf6', speed: 1.4 },
+    { symbol: '𝄢', position: [-1, 4, 0] as [number, number, number], color: '#d946ef', speed: 1.4 },
+    { symbol: '♪', position: [1, 1, -2] as [number, number, number], color: '#0ea5e9', speed: 1.0 },
+    { symbol: '♫', position: [-3, -1, 2] as [number, number, number], color: '#8b5cf6', speed: 1.6 },
   ];
 
   return (
     <>
-      {/* Ambient and Point Lights */}
-      <ambientLight intensity={0.2} />
-      <pointLight position={[10, 10, 10]} intensity={1} color="#06b6d4" />
-      <pointLight position={[-10, -10, -10]} intensity={0.8} color="#8b5cf6" />
-      <pointLight position={[0, 0, 10]} intensity={0.5} color="#a855f7" />
+      {/* Enhanced Lighting */}
+      <ambientLight intensity={0.4} />
+      <pointLight position={[10, 10, 10]} intensity={1.5} color="#00d4ff" />
+      <pointLight position={[-10, -10, -10]} intensity={1.2} color="#a855f7" />
+      <pointLight position={[0, 0, 10]} intensity={0.8} color="#c084fc" />
+      <pointLight position={[5, -5, 5]} intensity={1} color="#22d3ee" />
 
       {/* Floating Notes with Trails */}
       {notes.map((note, index) => (
@@ -192,20 +195,27 @@ const Scene3D = () => {
       {/* Particle Field */}
       <ParticleField />
 
-      {/* Sparkles Effect */}
+      {/* Enhanced Sparkles Effect */}
       <Sparkles
-        count={100}
-        scale={[20, 10, 10]}
-        size={2}
-        speed={0.3}
-        color="#06b6d4"
+        count={150}
+        scale={[25, 12, 12]}
+        size={3}
+        speed={0.4}
+        color="#00d4ff"
       />
       <Sparkles
-        count={80}
-        scale={[15, 8, 8]}
-        size={1.5}
+        count={120}
+        scale={[20, 10, 10]}
+        size={2.5}
+        speed={0.6}
+        color="#a855f7"
+      />
+      <Sparkles
+        count={100}
+        scale={[18, 8, 8]}
+        size={2}
         speed={0.5}
-        color="#8b5cf6"
+        color="#c084fc"
       />
     </>
   );
@@ -222,15 +232,16 @@ const FloatingNotes = () => {
         <Scene3D />
       </Canvas>
       
-      {/* Enhanced gradient background */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-cyan-400/20 to-purple-400/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-conic from-cyan-400/10 via-purple-400/10 to-cyan-400/10 rounded-full blur-2xl animate-spin" style={{ animationDuration: '20s' }}></div>
+      {/* Enhanced gradient background with higher opacity */}
+      <div className="absolute inset-0 opacity-50">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-cyan-400/40 to-purple-400/40 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-purple-400/40 to-pink-400/40 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-conic from-cyan-400/20 via-purple-400/20 to-cyan-400/20 rounded-full blur-2xl animate-spin" style={{ animationDuration: '20s' }}></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10"></div>
       </div>
 
       {/* Radial gradient overlay for depth */}
-      <div className="absolute inset-0 bg-gradient-radial from-transparent via-slate-900/10 to-slate-900/30"></div>
+      <div className="absolute inset-0 bg-gradient-radial from-transparent via-slate-900/5 to-slate-900/15"></div>
     </div>
   );
 };
