@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Download, FileText, Music, Trash2, User, Mail, Clock } from 'lucide-react';
+import { Calendar, Download, FileText, Music, Trash2, User, Mail, Clock, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Navigation from '@/components/Navigation';
 
@@ -58,6 +57,10 @@ const Profile = () => {
     }
   };
 
+  const handleBackToHome = () => {
+    navigate('/');
+  };
+
   const getFormatIcon = (format: string) => {
     switch (format.toLowerCase()) {
       case 'pdf':
@@ -83,16 +86,26 @@ const Profile = () => {
           {/* Profile Header */}
           <Card className="bg-slate-800/50 border-slate-700">
             <CardHeader>
-              <div className="flex items-center space-x-4">
-                <div className="bg-gradient-to-r from-cyan-500 to-purple-500 p-3 rounded-full">
-                  <User className="h-8 w-8 text-white" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="bg-gradient-to-r from-cyan-500 to-purple-500 p-3 rounded-full">
+                    <User className="h-8 w-8 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl text-slate-100">Profile</CardTitle>
+                    <CardDescription className="text-slate-400">
+                      Manage your account settings and view your activity
+                    </CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-2xl text-slate-100">Profile</CardTitle>
-                  <CardDescription className="text-slate-400">
-                    Manage your account settings and view your activity
-                  </CardDescription>
-                </div>
+                <Button
+                  onClick={handleBackToHome}
+                  variant="outline"
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700 flex items-center space-x-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span>Back</span>
+                </Button>
               </div>
             </CardHeader>
           </Card>
