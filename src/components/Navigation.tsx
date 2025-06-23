@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Music, LogIn, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,12 +9,24 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const Navigation = () => {
   const { user, logout, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleLogout = () => {
     logout();
+    toast({
+      title: "Logged out successfully",
+      description: "You have been logged out of your account.",
+    });
+    navigate('/');
+  };
+
+  const handleProfileClick = () => {
+    navigate('/profile');
   };
 
   const getDisplayName = () => {
@@ -61,6 +72,13 @@ const Navigation = () => {
               <DropdownMenuItem disabled className="text-slate-300 cursor-default">
                 <User className="mr-2 h-4 w-4" />
                 {getFullName()}
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={handleProfileClick}
+                className="text-slate-300 hover:bg-slate-700 focus:bg-slate-700"
+              >
+                <User className="mr-2 h-4 w-4" />
+                Profile
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={handleLogout}
