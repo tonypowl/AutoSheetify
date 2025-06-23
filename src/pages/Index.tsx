@@ -1,10 +1,11 @@
-
-import React, { useState } from 'react';
-import { Upload, Youtube, Music, Download, Play, FileText } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Upload, Youtube, Music, Download, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import UploadSection from '@/components/UploadSection';
-import InstrumentSelector from '@/components/InstrumentSelector';
+import InstrumentSelector, {
+  InstrumentSelectorHandles
+} from '@/components/InstrumentSelector';
 import ResultsSection from '@/components/ResultsSection';
 import LoadingAnimation from '@/components/LoadingAnimation';
 import FloatingNotes from '@/components/FloatingNotes';
@@ -17,6 +18,9 @@ const Index = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [showResults, setShowResults] = useState(false);
+
+  const selectorRef = useRef<InstrumentSelectorHandles>(null);
+  const instrumentScrollRef = useRef<HTMLDivElement>(null);
 
   const handleFileUpload = (file: File) => {
     setUploadedFile(file);
@@ -34,6 +38,19 @@ const Index = () => {
     });
   };
 
+  const scrollToInstrumentSelector = () => {
+    instrumentScrollRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+  };
+
+  const handleInstrumentPickFromNavbar = (instrument: 'piano' | 'guitar') => {
+    setSelectedInstrument(instrument);
+    selectorRef.current?.selectInstrument(instrument); // update via ref
+    scrollToInstrumentSelector(); // scroll into view
+  };
+
   const handleTranscribe = () => {
     if (!uploadedFile && !youtubeUrl) {
       toast({
@@ -45,7 +62,6 @@ const Index = () => {
     }
 
     setIsProcessing(true);
-    // Simulate processing time
     setTimeout(() => {
       setIsProcessing(false);
       setShowResults(true);
@@ -56,16 +72,14 @@ const Index = () => {
     }, 3000);
   };
 
-  if (isProcessing) {
-    return <LoadingAnimation />;
-  }
+  if (isProcessing) return <LoadingAnimation />;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
       <FloatingNotes />
-      
+
       {/* Navigation Header */}
-      <Navigation />
+      <Navigation onInstrumentPick={handleInstrumentPickFromNavbar} />
 
       {/* Hero Section */}
       <div id="home" className="relative z-10 pt-32 pb-12">
@@ -80,7 +94,7 @@ const Index = () => {
             Transform any audio or video into beautiful sheet music, MIDI files, and animated play-rolls. 
             Perfect for musicians, educators, and music lovers.
           </p>
-          
+
           <div className="flex flex-wrap justify-center gap-6 mb-12">
             <div className="flex items-center text-slate-300">
               <Upload className="h-5 w-5 mr-2 text-cyan-400" />
@@ -119,11 +133,14 @@ const Index = () => {
               youtubeUrl={youtubeUrl}
             />
 
-            {/* Instrument Selection */}
-            <InstrumentSelector
-              selectedInstrument={selectedInstrument}
-              onInstrumentChange={setSelectedInstrument}
-            />
+            {/* Instrument Selector with Ref and Scroll Target */}
+            <div ref={instrumentScrollRef}>
+              <InstrumentSelector
+                ref={selectorRef}
+                selectedInstrument={selectedInstrument}
+                onInstrumentChange={setSelectedInstrument}
+              />
+            </div>
 
             {/* Transcribe Button */}
             <div className="text-center mt-8">
@@ -149,17 +166,29 @@ const Index = () => {
           />
         )}
       </div>
-      {/* About Us Section */}
-      <section id="about" className="relative z-10 w-full py-24 px-4 bg-slate-900">
-        <div className="max-w-3xl mx-auto text-center text-slate-300">
-          <h2 className="text-3xl font-bold mb-4 text-white">About Us</h2>
-          <p className="text-lg">
-            AutoSheetify uses AI to convert audio and video into sheet music and MIDI files.
-            Built for musicians, learners, and creators to explore and play music with ease and clarity.
-          </p>
-        </div>
-      </section>
+
+      <section
+  id="about"
+  className="relative z-10 w-full px-4 bg-slate-900 py-16 flex flex-col justify-between items-center text-center text-slate-300"
+>
+  <div className="max-w-2xl space-y-4">
+    <h2 className="text-3xl font-bold text-white">About Us</h2>
+    <p className="text-lg">
+      AutoSheetify uses AI to convert audio and video into sheet music and MIDI files.
+      Built for musicians, learners, and creators to explore and play music with ease and clarity.
+    </p>
+  </div>
+
+  <div className="mt-12 text-sm text-slate-500">
+    © 2025 AutoSheetify. All rights reserved.
+  </div>
+</section>
+
+
+
     </div>
+    
+    
   );
 };
 

@@ -124,6 +124,8 @@ export default {
 				'float-5': 'float-5 5.5s ease-in-out infinite',
 				'float-6': 'float-6 4.2s ease-in-out infinite'
 			}
+
+			
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
