@@ -1,23 +1,25 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Music, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Music, Mail, Lock, Eye, EyeOff, User } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import LoginLoadingAnimation from './LoginLoadingAnimation';
 import { useAuth } from '@/contexts/AuthContext';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, signUp } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    username: '',
     confirmPassword: '',
     rememberMe: false
   });
@@ -26,24 +28,64 @@ const LoginPage = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate authentication process
-    setTimeout(() => {
+    try {
+      if (isLogin) {
+        // Handle login
+        const { error } = await login(formData.email, formData.password);
+        
+        if (error === 'account_not_found') {
+          toast({
+            title: "❌ Account not found",
+            description: "It looks like you don't have an account yet. Would you like to sign up?",
+            variant: "destructive",
+          });
+          setIsLogin(false); // Switch to sign up mode
+        } else if (error) {
+          toast({
+            title: "Login failed",
+            description: error,
+            variant: "destructive",
+          });
+        } else {
+          // Extract username from email for welcome message
+          const username = formData.username || formData.email.split('@')[0];
+          toast({
+            title: `✅ Welcome back, ${username}!`,
+            description: "Successfully logged in",
+          });
+          navigate('/');
+        }
+      } else {
+        // Handle sign up
+        if (formData.password !== formData.confirmPassword) {
+          toast({
+            title: "Password mismatch",
+            description: "Passwords do not match",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const { error } = await signUp(formData.email, formData.password, formData.username);
+        
+        if (error) {
+          toast({
+            title: "Registration failed",
+            description: error,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "🎉 Registered successfully!",
+            description: "You can now log in",
+          });
+          setIsLogin(true); // Switch back to login mode
+          setFormData(prev => ({ ...prev, password: '', confirmPassword: '', username: '' }));
+        }
+      }
+    } finally {
       setIsLoading(false);
-      
-      // Extract username from email (part before @)
-      const username = formData.email.split('@')[0];
-      
-      // Update auth context
-      login(formData.email, username);
-      
-      toast({
-        title: isLogin ? "Welcome back!" : "Account created!",
-        description: `Successfully ${isLogin ? 'logged in' : 'signed up'}`,
-      });
-      
-      // Navigate to main AutoSheetify page after successful login/signup
-      navigate('/');
-    }, 2500);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,6 +138,26 @@ const LoginPage = () => {
 
         <CardContent className="space-y-6">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Username Field (Sign Up only) */}
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="username" className="text-slate-300">Username</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    id="username"
+                    name="username"
+                    type="text"
+                    value={formData.username}
+                    onChange={handleInputChange}
+                    className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-cyan-400"
+                    placeholder="Enter your username"
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Email Field */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-slate-300">Email</Label>
