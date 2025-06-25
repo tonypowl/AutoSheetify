@@ -40,6 +40,12 @@ const LoginPage = () => {
             variant: "destructive",
           });
           setIsLogin(false); // Switch to sign up mode
+        } else if (error === 'email_not_confirmed') {
+          toast({
+            title: "📧 Email not confirmed",
+            description: "Please check your email and click the confirmation link before logging in. If you can't find it, try signing up again.",
+            variant: "destructive",
+          });
         } else if (error) {
           toast({
             title: "Login failed",
@@ -77,7 +83,7 @@ const LoginPage = () => {
         } else {
           toast({
             title: "🎉 Registered successfully!",
-            description: "You can now log in",
+            description: "Please check your email for a confirmation link, then you can log in.",
           });
           setIsLogin(true); // Switch back to login mode
           setFormData(prev => ({ ...prev, password: '', confirmPassword: '', username: '' }));

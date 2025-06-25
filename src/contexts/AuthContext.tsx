@@ -63,6 +63,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (error.message === 'Invalid login credentials') {
           return { error: 'account_not_found' };
         }
+        if (error.message === 'Email not confirmed') {
+          return { error: 'email_not_confirmed' };
+        }
         return { error: error.message };
       }
 
