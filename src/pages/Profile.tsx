@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -19,7 +20,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
-  const [editedUsername, setEditedUsername] = useState(user?.username || '');
+  const [editedUsername, setEditedUsername] = useState(user?.user_metadata?.full_name || '');
 
   // Mock data for demonstrations
   const joinedDate = new Date('2024-01-15').toLocaleDateString();
@@ -130,7 +131,7 @@ const Profile = () => {
                       className="bg-slate-700 border-slate-600 text-slate-100"
                     />
                   ) : (
-                    <p className="text-slate-100 p-2 bg-slate-700 rounded">{user.username || 'Not set'}</p>
+                    <p className="text-slate-100 p-2 bg-slate-700 rounded">{user.user_metadata?.full_name || 'Not set'}</p>
                   )}
                 </div>
                 <div className="space-y-2">

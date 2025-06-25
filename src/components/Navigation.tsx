@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Music, LogIn, User, LogOut } from 'lucide-react';
@@ -30,8 +31,9 @@ const Navigation = () => {
   };
 
   const getDisplayName = () => {
-    if (user?.username) {
-      return user.username.length > 8 ? `${user.username.slice(0, 8)}...` : user.username;
+    if (user?.user_metadata?.full_name) {
+      const fullName = user.user_metadata.full_name;
+      return fullName.length > 8 ? `${fullName.slice(0, 8)}...` : fullName;
     }
     if (user?.email) {
       const username = user.email.split('@')[0];
@@ -41,7 +43,7 @@ const Navigation = () => {
   };
 
   const getFullName = () => {
-    return user?.username || user?.email || 'User';
+    return user?.user_metadata?.full_name || user?.email || 'User';
   };
 
   return (
