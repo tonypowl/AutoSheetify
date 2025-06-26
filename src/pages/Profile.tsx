@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -11,16 +10,28 @@ import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Calendar, Download, FileText, Music, Trash2, User, Mail, Clock, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Navigation from '@/components/Navigation';
 
 const Profile = () => {
-  const { user, logout } = useAuth();
+  const { user, deleteAccount } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [editedUsername, setEditedUsername] = useState(user?.user_metadata?.full_name || '');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Mock data for demonstrations
   const joinedDate = new Date('2024-01-15').toLocaleDateString();
@@ -45,13 +56,22 @@ const Profile = () => {
     setIsEditing(false);
   };
 
-  const handleDeleteAccount = () => {
-    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-      // Here you would typically delete the account
-      logout();
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    
+    const { error } = await deleteAccount();
+    
+    if (error) {
+      toast({
+        title: "Failed to delete account",
+        description: error,
+        variant: "destructive",
+      });
+      setIsDeleting(false);
+    } else {
       toast({
         title: "Account deleted",
-        description: "Your account has been deleted successfully.",
+        description: "Your account has been permanently deleted.",
         variant: "destructive",
       });
       navigate('/');
@@ -283,13 +303,42 @@ const Profile = () => {
                 <p className="text-slate-400 mb-4">
                   Once you delete your account, there is no going back. Please be certain.
                 </p>
-                <Button 
-                  onClick={handleDeleteAccount}
-                  variant="destructive"
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  Delete Account
-                </Button>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="destructive"
+                      className="bg-red-600 hover:bg-red-700"
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? 'Deleting...' : 'Delete Account'}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="bg-slate-800 border-slate-700">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-slate-100">
+                        Are you absolutely sure?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription className="text-slate-300">
+                        This action cannot be undone. This will permanently delete your account
+                        and remove all your data from our servers. You will need to create a new
+                        account if you want to use our services again.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="border-slate-600 text-slate-300 hover:bg-slate-700">
+                        Cancel
+                      </AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleDeleteAccount}
+                        className="bg-red-600 hover:bg-red-700"
+                        disabled={isDeleting}
+                      >
+                        {isDeleting ? 'Deleting...' : 'Yes, delete my account'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </CardContent>
           </Card>
