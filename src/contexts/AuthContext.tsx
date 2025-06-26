@@ -113,7 +113,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const deleteAccount = async () => {
     try {
       // First delete the user account from Supabase Auth using rpc with proper typing
-      const { error } = await supabase.rpc('delete_user' as any);
+      const { error } = await (supabase.rpc as any)('delete_user');
       
       if (error) {
         console.error('Delete account error:', error);
