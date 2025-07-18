@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react'; // Keep React and hooks, no need for useContext here
 import { Upload, Youtube, Music, Download, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
@@ -11,31 +11,55 @@ import LoadingAnimation from '@/components/LoadingAnimation';
 import FloatingNotes from '@/components/FloatingNotes';
 import Navigation from '@/components/Navigation';
 import HowItWorks from '@/components/HowItWorks';
+import axios from 'axios';
+// THIS IS THE CRUCIAL LINE: Ensure you only import useAuth
+import { useAuth } from '@/contexts/AuthContext'; // <--- THIS IS THE CORRECT IMPORT
 
 const Index = () => {
   const [selectedInstrument, setSelectedInstrument] = useState<'piano' | 'guitar'>('piano');
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  // Re-enabled YouTube functionality (with a warning that backend needs it)
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [showResults, setShowResults] = useState(false);
+  const [transcriptionResults, setTranscriptionResults] = useState<any>(null);
 
   const selectorRef = useRef<InstrumentSelectorHandles>(null);
   const instrumentScrollRef = useRef<HTMLDivElement>(null);
 
-  const handleFileUpload = (file: File) => {
+  // Use the useAuth hook to get the necessary values
+  const { session, isAuthenticated, loading } = useAuth(); // <--- CORRECT USAGE
+
+  const handleFileUpload = (file: File | null) => {
     setUploadedFile(file);
-    toast({
-      title: "File uploaded successfully!",
-      description: `${file.name} is ready for transcription.`,
-    });
+    if (file) {
+      setYoutubeUrl(''); // Clear YouTube URL if file is uploaded
+      toast({
+        title: "File uploaded successfully!",
+        description: `${file.name} is ready for transcription.`,
+      });
+    } else {
+      toast({
+        title: "File removed",
+        description: "Upload a new file to continue.",
+      });
+    }
   };
 
   const handleYoutubeSubmit = (url: string) => {
     setYoutubeUrl(url);
-    toast({
-      title: "YouTube link added!",
-      description: "Ready to extract audio and transcribe.",
-    });
+    if (url) {
+      setUploadedFile(null); // Clear uploaded file if YouTube URL is provided
+      toast({
+        title: "YouTube link added!",
+        description: "Ready to extract audio and transcribe. (Note: Backend YouTube support is pending)",
+      });
+    } else {
+      toast({
+        title: "YouTube link removed",
+        description: "Add a new YouTube link to continue.",
+      });
+    }
   };
 
   const scrollToInstrumentSelector = () => {
@@ -51,25 +75,79 @@ const Index = () => {
     scrollToInstrumentSelector();
   };
 
-  const handleTranscribe = () => {
-    if (!uploadedFile && !youtubeUrl) {
+  const handleTranscribe = async () => {
+    // Determine input type
+    let inputType: 'file' | 'youtube' | null = null;
+    if (uploadedFile) {
+      inputType = 'file';
+    } else if (youtubeUrl) {
+      inputType = 'youtube';
+    }
+
+    if (!inputType) {
       toast({
         title: "No input provided",
-        description: "Please upload a file or provide a YouTube link.",
+        description: "Please upload an audio/video file or provide a YouTube link.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (loading) {
+      toast({
+        title: "Please wait",
+        description: "Checking authentication status...",
+        variant: "default",
+      });
+      return;
+    }
+
+    if (!isAuthenticated || !session?.access_token) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to transcribe files.",
         variant: "destructive",
       });
       return;
     }
 
     setIsProcessing(true);
-    setTimeout(() => {
+    setShowResults(false);
+
+    const formData = new FormData();
+    if (inputType === 'file' && uploadedFile) {
+      formData.append('file', uploadedFile);
+    } else if (inputType === 'youtube' && youtubeUrl) {
+      formData.append('youtube_url', youtubeUrl); // Ensure backend supports 'youtube_url'
+    }
+    formData.append('instrument', selectedInstrument);
+
+    try {
+      const response = await axios.post('http://localhost:8000/transcribe', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+      });
+
+      setTranscriptionResults(response.data);
       setIsProcessing(false);
       setShowResults(true);
       toast({
         title: "Transcription complete!",
         description: "Your sheet music and MIDI files are ready.",
       });
-    }, 3000);
+
+    } catch (error: any) {
+      setIsProcessing(false);
+      setShowResults(false);
+      console.error('Transcription failed:', error.response?.data || error.message);
+      toast({
+        title: "Transcription failed!",
+        description: error.response?.data?.detail || "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isProcessing) return <LoadingAnimation />;
@@ -78,7 +156,6 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
       <FloatingNotes />
 
-      {/* Navigation with instrument control */}
       <Navigation onInstrumentPick={handleInstrumentPickFromNavbar} />
 
       {/* Hero Section */}
@@ -91,7 +168,7 @@ const Index = () => {
             </h1>
           </div>
           <p className="text-xl text-slate-300 mb-8 max-w-3xl mx-auto">
-            Transform any audio or video into beautiful sheet music, MIDI files, and animated play-rolls. 
+            Transform any audio or video into beautiful sheet music, MIDI files, and animated play-rolls.
             Perfect for musicians, educators, and music lovers.
           </p>
 
@@ -102,7 +179,7 @@ const Index = () => {
             </div>
             <div className="flex items-center text-slate-300">
               <Youtube className="h-5 w-5 mr-2 text-red-400" />
-              YouTube Links
+              YouTube Links (Coming Soon!)
             </div>
             <div className="flex items-center text-slate-300">
               <FileText className="h-5 w-5 mr-2 text-green-400" />
@@ -126,7 +203,7 @@ const Index = () => {
         {!showResults ? (
           <div className="max-w-4xl mx-auto">
             {/* Upload Section */}
-            <UploadSection 
+            <UploadSection
               onFileUpload={handleFileUpload}
               onYoutubeSubmit={handleYoutubeSubmit}
               uploadedFile={uploadedFile}
@@ -148,6 +225,7 @@ const Index = () => {
                 onClick={handleTranscribe}
                 size="lg"
                 className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                disabled={(!uploadedFile && !youtubeUrl) || isProcessing || loading} // Disable if no input or processing/loading
               >
                 <Music className="mr-2 h-6 w-6" />
                 Transcribe to Sheet Music
@@ -155,13 +233,16 @@ const Index = () => {
             </div>
           </div>
         ) : (
-          <ResultsSection 
+          <ResultsSection
             instrument={selectedInstrument}
-            fileName={uploadedFile?.name || 'YouTube Audio'}
+            // Pass the original file name or a generated name for YouTube links
+            fileName={uploadedFile?.name || (transcriptionResults?.original_filename || 'Unknown File')}
+            transcriptionData={transcriptionResults}
             onStartOver={() => {
               setShowResults(false);
               setUploadedFile(null);
               setYoutubeUrl('');
+              setTranscriptionResults(null);
             }}
           />
         )}

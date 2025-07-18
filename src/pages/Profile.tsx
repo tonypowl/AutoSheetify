@@ -79,10 +79,11 @@ const Profile = () => {
   }
 
   return (
+    
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <Navigation />
       
-      <div className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-6 py-16">
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Profile Header */}
           <Card className="bg-slate-800/50 border-slate-700">

@@ -1,28 +1,40 @@
-
 import React, { useRef, useState } from 'react';
-import { Upload, Youtube, FileAudio, FileVideo, X } from 'lucide-react';
+import {
+  Upload,
+  Youtube,
+  FileAudio,
+  FileVideo,
+  X,
+  Loader2,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 interface UploadSectionProps {
-  onFileUpload: (file: File) => void;
+  onFileUpload: (file: File | null) => void;
   onYoutubeSubmit: (url: string) => void;
   uploadedFile: File | null;
   youtubeUrl: string;
 }
 
-const UploadSection = ({ onFileUpload, onYoutubeSubmit, uploadedFile, youtubeUrl }: UploadSectionProps) => {
+const UploadSection = ({
+  onFileUpload,
+  onYoutubeSubmit,
+  uploadedFile,
+  youtubeUrl,
+}: UploadSectionProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [tempYoutubeUrl, setTempYoutubeUrl] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
+    if (e.type === 'dragenter' || e.type === 'dragover') {
       setDragActive(true);
-    } else if (e.type === "dragleave") {
+    } else if (e.type === 'dragleave') {
       setDragActive(false);
     }
   };
@@ -31,7 +43,6 @@ const UploadSection = ({ onFileUpload, onYoutubeSubmit, uploadedFile, youtubeUrl
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFile(e.dataTransfer.files[0]);
     }
@@ -45,22 +56,31 @@ const UploadSection = ({ onFileUpload, onYoutubeSubmit, uploadedFile, youtubeUrl
   };
 
   const handleFile = (file: File) => {
-    const validTypes = ['audio/wav', 'video/mp4', 'audio/mpeg', 'audio/mp3'];
+    const validTypes = ['audio/wav', 'audio/mpeg', 'audio/mp3', 'video/mp4'];
     if (validTypes.includes(file.type)) {
+      setLoading(true);
       onFileUpload(file);
+      setLoading(false);
     } else {
       alert('Please upload a valid audio (WAV, MP3) or video (MP4) file.');
     }
   };
 
   const handleYoutubeSubmit = () => {
-    if (tempYoutubeUrl.includes('youtube.com') || tempYoutubeUrl.includes('youtu.be')) {
-      onYoutubeSubmit(tempYoutubeUrl);
-      setTempYoutubeUrl('');
-    } else {
-      alert('Please enter a valid YouTube URL.');
-    }
-  };
+    // A more robust (but still basic) check for YouTube URLs
+    const isValidYoutubeUrl = 
+      tempYoutubeUrl.includes('youtube.com/watch?v=') ||
+      tempYoutubeUrl.includes('youtu.be/');
+
+    if (isValidYoutubeUrl) {
+      setLoading(true);
+      onYoutubeSubmit(tempYoutubeUrl);
+      setTempYoutubeUrl('');
+      setLoading(false);
+    } else {
+      alert('Please enter a valid YouTube URL (e.g., youtube.com/watch?v=... or youtu.be/...).');
+    }
+  };
 
   return (
     <div className="grid md:grid-cols-2 gap-6 mb-8">
@@ -75,8 +95,8 @@ const UploadSection = ({ onFileUpload, onYoutubeSubmit, uploadedFile, youtubeUrl
         <CardContent>
           <div
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300 ${
-              dragActive 
-                ? 'border-cyan-400 bg-cyan-400/10' 
+              dragActive
+                ? 'border-cyan-400 bg-cyan-400/10'
                 : 'border-slate-600 hover:border-slate-500'
             }`}
             onDragEnter={handleDrag}
@@ -102,7 +122,7 @@ const UploadSection = ({ onFileUpload, onYoutubeSubmit, uploadedFile, youtubeUrl
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onFileUpload(null as any)}
+                  onClick={() => onFileUpload(null)}
                   className="border-slate-600 text-slate-300 hover:bg-slate-700"
                 >
                   <X className="h-4 w-4 mr-1" />
@@ -193,6 +213,14 @@ const UploadSection = ({ onFileUpload, onYoutubeSubmit, uploadedFile, youtubeUrl
           </div>
         </CardContent>
       </Card>
+
+      {/* Optional Loading Indicator */}
+      {loading && (
+        <div className="col-span-2 flex justify-center mt-4">
+          <Loader2 className="animate-spin text-cyan-400 mr-2" />
+          <span className="text-white">Processing...</span>
+        </div>
+      )}
     </div>
   );
 };
