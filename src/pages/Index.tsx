@@ -135,6 +135,7 @@ const Index = () => {
           <ResultsSection 
             instrument={selectedInstrument}
             fileName={uploadedFile?.name || 'YouTube Audio'}
+            uploadedFile={uploadedFile}
             onStartOver={() => {
               setShowResults(false);
               setUploadedFile(null);

@@ -1,19 +1,44 @@
-import React, { useState } from 'react';
-import { Download, Play, FileText, Music, RotateCcw, Eye, Save } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Download, Play, FileText, Music, RotateCcw, Eye, Save, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 interface ResultsSectionProps {
   instrument: 'piano' | 'guitar';
   fileName: string;
+  uploadedFile: File | null;
   onStartOver: () => void;
 }
 
-const ResultsSection = ({ instrument, fileName, onStartOver }: ResultsSectionProps) => {
+const ResultsSection = ({ instrument, fileName, uploadedFile, onStartOver }: ResultsSectionProps) => {
   const [isPlayingOriginal, setIsPlayingOriginal] = useState(false);
   const [isPlayingTranscribed, setIsPlayingTranscribed] = useState(false);
   const [savedToLibrary, setSavedToLibrary] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const navigate = useNavigate();
+
+  // Mock transcription data - in a real app this would come from the actual transcription process
+  const transcriptionData = {
+    detectedNotes: ['C4', 'E4', 'G4', 'C5', 'F4', 'A4', 'G4', 'B4', 'D5'],
+    tempo: 120,
+    timeSignature: '4/4',
+    duration: '0:32'
+  };
+
+  // Create audio URL from uploaded file
+  useEffect(() => {
+    if (uploadedFile && audioRef.current) {
+      const audioUrl = URL.createObjectURL(uploadedFile);
+      audioRef.current.src = audioUrl;
+      
+      return () => {
+        URL.revokeObjectURL(audioUrl);
+      };
+    }
+  }, [uploadedFile]);
 
   const createDownloadFile = (content: string, filename: string, mimeType: string) => {
     const blob = new Blob([content], { type: mimeType });
@@ -135,28 +160,122 @@ startxref
   };
 
   const handlePlayOriginal = () => {
-    setIsPlayingOriginal(!isPlayingOriginal);
-    toast({
-      title: isPlayingOriginal ? "Stopped Original Audio" : "Playing Original Audio",
-      description: isPlayingOriginal ? "Original audio playback stopped." : "Playing the original uploaded audio.",
-    });
-    
-    // Simulate audio playback
-    if (!isPlayingOriginal) {
-      setTimeout(() => setIsPlayingOriginal(false), 5000);
+    if (!audioRef.current) {
+      toast({
+        title: "Audio not available",
+        description: "No audio file to play.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (isPlayingOriginal) {
+      audioRef.current.pause();
+      setIsPlayingOriginal(false);
+      toast({
+        title: "Stopped Original Audio",
+        description: "Original audio playback stopped.",
+      });
+    } else {
+      audioRef.current.play();
+      setIsPlayingOriginal(true);
+      toast({
+        title: "Playing Original Audio",
+        description: "Playing the original uploaded audio.",
+      });
     }
   };
 
-  const handleSaveToLibrary = () => {
-    setSavedToLibrary(true);
-    toast({
-      title: "Saved to Library!",
-      description: `${fileName} transcription has been saved to your personal library.`,
-    });
+  const handleSaveToLibrary = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to save to your library.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Create mock file links (in a real app these would be actual file URLs)
+      const baseFileName = fileName.split('.')[0];
+      const pdfLink = `https://example.com/files/${baseFileName}_sheet_music.pdf`;
+      const midiLink = `https://example.com/files/${baseFileName}.mid`;
+      const videoLink = `https://example.com/files/${baseFileName}_piano_roll.mp4`;
+
+      const { error } = await supabase
+        .from('transcriptions')
+        .insert({
+          user_id: user.id,
+          filename: fileName,
+          instrument: instrument,
+          detected_notes: transcriptionData.detectedNotes,
+          tempo: transcriptionData.tempo,
+          time_signature: transcriptionData.timeSignature,
+          duration: transcriptionData.duration,
+          pdf_link: pdfLink,
+          midi_link: midiLink,
+          video_link: videoLink
+        });
+
+      if (error) {
+        console.error('Error saving to library:', error);
+        toast({
+          title: "Error saving to library",
+          description: "There was an error saving your transcription. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setSavedToLibrary(true);
+      toast({
+        title: "Saved to Library!",
+        description: `${fileName} transcription has been saved to your personal library.`,
+      });
+    } catch (error) {
+      console.error('Error saving to library:', error);
+      toast({
+        title: "Error saving to library",
+        description: "There was an error saving your transcription. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleGoBack = () => {
+    window.history.back();
+  };
+
+  // Handle audio events
+  const handleAudioEnded = () => {
+    setIsPlayingOriginal(false);
   };
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
+      {/* Hidden audio element for playing original file */}
+      <audio
+        ref={audioRef}
+        onEnded={handleAudioEnded}
+        onPause={() => setIsPlayingOriginal(false)}
+        className="hidden"
+      />
+
+      {/* Go Back Button */}
+      <div className="flex justify-start mb-4">
+        <Button
+          onClick={handleGoBack}
+          variant="outline"
+          className="border-slate-600 text-slate-300 hover:bg-slate-700"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Go Back
+        </Button>
+      </div>
+
       {/* Header */}
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center space-x-2">
@@ -316,15 +435,15 @@ startxref
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-300">
               <div>
                 <h4 className="text-cyan-400 font-semibold mb-2">Detected Notes:</h4>
-                <p>C4, E4, G4, C5 (C Major Chord)</p>
-                <p>F4, A4, C5 (F Major Chord)</p>
-                <p>G4, B4, D5 (G Major Chord)</p>
+                <p>{transcriptionData.detectedNotes.join(', ')}</p>
+                <p>Musical patterns automatically detected</p>
+                <p>Chord progressions identified</p>
               </div>
               <div>
                 <h4 className="text-purple-400 font-semibold mb-2">Timing:</h4>
-                <p>Tempo: 120 BPM</p>
-                <p>Time Signature: 4/4</p>
-                <p>Duration: 0:32</p>
+                <p>Tempo: {transcriptionData.tempo} BPM</p>
+                <p>Time Signature: {transcriptionData.timeSignature}</p>
+                <p>Duration: {transcriptionData.duration}</p>
               </div>
             </div>
           </div>
