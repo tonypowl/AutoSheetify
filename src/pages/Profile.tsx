@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +24,7 @@ import {
 import { Calendar, Download, FileText, Music, Trash2, User, Mail, Clock, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Navigation from '@/components/Navigation';
+import { supabase } from '@/integrations/supabase/client';
 
 const Profile = () => {
   const { user, deleteAccount } = useAuth();
@@ -32,20 +33,43 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedUsername, setEditedUsername] = useState(user?.user_metadata?.full_name || '');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [transcriptions, setTranscriptions] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data for demonstrations
-  const joinedDate = new Date('2024-01-15').toLocaleDateString();
-  const downloads = [
-    { id: 1, name: 'Beethoven Symphony No.9', format: 'PDF', date: '2024-06-20', size: '2.5 MB' },
-    { id: 2, name: 'Jazz Improvisation', format: 'MIDI', date: '2024-06-18', size: '1.2 MB' },
-    { id: 3, name: 'Classical Guitar Piece', format: 'PDF', date: '2024-06-15', size: '3.1 MB' },
-  ];
+  const joinedDate = new Date(user?.created_at || '2024-01-15').toLocaleDateString();
 
-  const recentConversions = [
-    { id: 1, name: 'Audio to Sheet Music', input: 'MP3', output: 'PDF', date: '2024-06-22' },
-    { id: 2, name: 'MIDI to Score', input: 'MIDI', output: 'PDF', date: '2024-06-21' },
-    { id: 3, name: 'Audio Analysis', input: 'WAV', output: 'MIDI', date: '2024-06-19' },
-  ];
+  // Fetch user's transcriptions from Supabase
+  const fetchTranscriptions = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('transcriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching transcriptions:', error);
+        toast({
+          title: "Error loading data",
+          description: "Failed to load your transcriptions. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setTranscriptions(data || []);
+    } catch (error) {
+      console.error('Error fetching transcriptions:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTranscriptions();
+  }, [user]);
 
   const handleSaveProfile = () => {
     // Here you would typically update the user profile
@@ -82,6 +106,56 @@ const Profile = () => {
     navigate('/');
   };
 
+  const handleDeleteTranscription = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('transcriptions')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting transcription:', error);
+        toast({
+          title: "Error deleting item",
+          description: "Failed to delete the transcription. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Update local state
+      setTranscriptions(prev => prev.filter(t => t.id !== id));
+      
+      toast({
+        title: "Item deleted",
+        description: "Transcription has been removed from your library.",
+      });
+    } catch (error) {
+      console.error('Error deleting transcription:', error);
+      toast({
+        title: "Error deleting item",
+        description: "Failed to delete the transcription. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDownloadFile = (url: string, filename: string) => {
+    // Create a download link
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Download started",
+      description: `${filename} download has started.`,
+    });
+  };
+
   const getFormatIcon = (format: string) => {
     switch (format.toLowerCase()) {
       case 'pdf':
@@ -91,6 +165,14 @@ const Profile = () => {
       default:
         return <FileText className="h-4 w-4" />;
     }
+  };
+
+  const getFileSize = (filename: string) => {
+    // Mock file sizes based on format
+    if (filename.includes('.pdf')) return '2.5 MB';
+    if (filename.includes('.mid')) return '1.2 MB';
+    if (filename.includes('.mp4')) return '15.3 MB';
+    return '1.0 MB';
   };
 
   if (!user) {
@@ -201,37 +283,103 @@ const Profile = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-slate-700">
-                    <TableHead className="text-slate-300">File Name</TableHead>
-                    <TableHead className="text-slate-300">Format</TableHead>
-                    <TableHead className="text-slate-300">Date</TableHead>
-                    <TableHead className="text-slate-300">Size</TableHead>
-                    <TableHead className="text-slate-300">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {downloads.map((download) => (
-                    <TableRow key={download.id} className="border-slate-700">
-                      <TableCell className="text-slate-100">{download.name}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="border-slate-600 text-slate-300">
-                          {getFormatIcon(download.format)}
-                          <span className="ml-1">{download.format}</span>
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-slate-300">{download.date}</TableCell>
-                      <TableCell className="text-slate-300">{download.size}</TableCell>
-                      <TableCell>
-                        <Button size="sm" variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
+              {isLoading ? (
+                <div className="text-center py-8 text-slate-400">Loading...</div>
+              ) : transcriptions.length === 0 ? (
+                <div className="text-center py-8 text-slate-400">
+                  No downloads yet. Start by transcribing an audio file!
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-slate-700">
+                      <TableHead className="text-slate-300">File Name</TableHead>
+                      <TableHead className="text-slate-300">Format</TableHead>
+                      <TableHead className="text-slate-300">Date</TableHead>
+                      <TableHead className="text-slate-300">Size</TableHead>
+                      <TableHead className="text-slate-300">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {transcriptions.flatMap((transcription) => {
+                      const files = [];
+                      if (transcription.pdf_link) {
+                        files.push({
+                          id: `${transcription.id}-pdf`,
+                          name: transcription.filename.replace(/\.[^/.]+$/, '') + '_sheet_music',
+                          format: 'PDF',
+                          date: new Date(transcription.created_at).toLocaleDateString(),
+                          size: getFileSize('pdf'),
+                          url: transcription.pdf_link,
+                          transcriptionId: transcription.id
+                        });
+                      }
+                      if (transcription.midi_link) {
+                        files.push({
+                          id: `${transcription.id}-midi`,
+                          name: transcription.filename.replace(/\.[^/.]+$/, ''),
+                          format: 'MIDI',
+                          date: new Date(transcription.created_at).toLocaleDateString(),
+                          size: getFileSize('midi'),
+                          url: transcription.midi_link,
+                          transcriptionId: transcription.id
+                        });
+                      }
+                      return files;
+                    }).map((file) => (
+                      <TableRow key={file.id} className="border-slate-700">
+                        <TableCell className="text-slate-100">{file.name}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="border-slate-600 text-slate-300">
+                            {getFormatIcon(file.format)}
+                            <span className="ml-1">{file.format}</span>
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-slate-300">{file.date}</TableCell>
+                        <TableCell className="text-slate-300">{file.size}</TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                              onClick={() => handleDownloadFile(file.url, `${file.name}.${file.format.toLowerCase()}`)}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button size="sm" variant="outline" className="border-red-600 text-red-400 hover:bg-red-900/20">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent className="bg-slate-800 border-slate-700">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="text-slate-100">Delete Download</AlertDialogTitle>
+                                  <AlertDialogDescription className="text-slate-300">
+                                    Are you sure you want to delete this transcription? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel className="border-slate-600 text-slate-300 hover:bg-slate-700">
+                                    Cancel
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={() => handleDeleteTranscription(file.transcriptionId)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
 
@@ -247,37 +395,77 @@ const Profile = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-slate-700">
-                    <TableHead className="text-slate-300">Conversion</TableHead>
-                    <TableHead className="text-slate-300">Input → Output</TableHead>
-                    <TableHead className="text-slate-300">Date</TableHead>
-                    <TableHead className="text-slate-300">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentConversions.map((conversion) => (
-                    <TableRow key={conversion.id} className="border-slate-700">
-                      <TableCell className="text-slate-100">{conversion.name}</TableCell>
-                      <TableCell className="text-slate-300">
-                        {conversion.input} → {conversion.output}
-                      </TableCell>
-                      <TableCell className="text-slate-300">{conversion.date}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button size="sm" variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
-                            <Download className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" variant="outline" className="border-red-600 text-red-400 hover:bg-red-900/20">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+              {isLoading ? (
+                <div className="text-center py-8 text-slate-400">Loading...</div>
+              ) : transcriptions.length === 0 ? (
+                <div className="text-center py-8 text-slate-400">
+                  No conversions yet. Start by transcribing an audio file!
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-slate-700">
+                      <TableHead className="text-slate-300">Conversion</TableHead>
+                      <TableHead className="text-slate-300">Input → Output</TableHead>
+                      <TableHead className="text-slate-300">Date</TableHead>
+                      <TableHead className="text-slate-300">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {transcriptions.map((transcription) => (
+                      <TableRow key={transcription.id} className="border-slate-700">
+                        <TableCell className="text-slate-100">{transcription.filename}</TableCell>
+                        <TableCell className="text-slate-300">
+                          {transcription.filename.split('.').pop()?.toUpperCase() || 'AUDIO'} → PDF
+                        </TableCell>
+                        <TableCell className="text-slate-300">
+                          {new Date(transcription.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            {transcription.pdf_link && (
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                                onClick={() => handleDownloadFile(transcription.pdf_link, `${transcription.filename.replace(/\.[^/.]+$/, '')}_sheet_music.pdf`)}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button size="sm" variant="outline" className="border-red-600 text-red-400 hover:bg-red-900/20">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent className="bg-slate-800 border-slate-700">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="text-slate-100">Delete Conversion</AlertDialogTitle>
+                                  <AlertDialogDescription className="text-slate-300">
+                                    Are you sure you want to delete this conversion? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel className="border-slate-600 text-slate-300 hover:bg-slate-700">
+                                    Cancel
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={() => handleDeleteTranscription(transcription.id)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
 

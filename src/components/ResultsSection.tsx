@@ -233,7 +233,7 @@ startxref
       setSavedToLibrary(true);
       toast({
         title: "Saved to Library!",
-        description: `${fileName} transcription has been saved to your personal library.`,
+        description: `${fileName} transcription has been saved to your personal library. Visit your profile to manage your saved files.`,
       });
     } catch (error) {
       console.error('Error saving to library:', error);
@@ -348,7 +348,10 @@ startxref
                 Preview
               </Button>
               <Button
-                onClick={() => handleDownload('Sheet Music PDF')}
+                onClick={() => {
+                  handleDownload('Sheet Music PDF');
+                  window.open('https://example.com/files/sheet_music_preview.pdf', '_blank');
+                }}
                 className="w-full bg-green-600 hover:bg-green-700 text-white"
               >
                 <Download className="mr-2 h-4 w-4" />
@@ -381,7 +384,10 @@ startxref
                 Play Preview
               </Button>
               <Button
-                onClick={() => handleDownload('MIDI File')}
+                onClick={() => {
+                  handleDownload('MIDI File');
+                  window.open('https://example.com/files/midi_preview.mid', '_blank');
+                }}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white"
               >
                 <Download className="mr-2 h-4 w-4" />
@@ -414,7 +420,10 @@ startxref
                 Watch Animation
               </Button>
               <Button
-                onClick={() => handleDownload('Play-Roll Video')}
+                onClick={() => {
+                  handleDownload('Play-Roll Video');
+                  window.open('https://example.com/files/piano_roll_video.mp4', '_blank');
+                }}
                 className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
               >
                 <Download className="mr-2 h-4 w-4" />
