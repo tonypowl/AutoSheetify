@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'; // Keep React and hooks, no need for useContext here
+import React, { useState, useRef } from 'react';
 import { Upload, Youtube, Music, Download, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
@@ -12,23 +12,24 @@ import FloatingNotes from '@/components/FloatingNotes';
 import Navigation from '@/components/Navigation';
 import HowItWorks from '@/components/HowItWorks';
 import axios from 'axios';
-// THIS IS THE CRUCIAL LINE: Ensure you only import useAuth
-import { useAuth } from '@/contexts/AuthContext'; // <--- THIS IS THE CORRECT IMPORT
+import { useAuth } from '@/contexts/AuthContext';
+
+// Import the TranscriptionData type/interface from ResultsSection to type transcriptionResults
+import type { TranscriptionData } from '@/components/ResultsSection';
 
 const Index = () => {
   const [selectedInstrument, setSelectedInstrument] = useState<'piano' | 'guitar'>('piano');
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  // Re-enabled YouTube functionality (with a warning that backend needs it)
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [showResults, setShowResults] = useState(false);
-  const [transcriptionResults, setTranscriptionResults] = useState<any>(null);
+  // Use the imported TranscriptionData interface for better type safety
+  const [transcriptionResults, setTranscriptionResults] = useState<TranscriptionData | null>(null);
 
   const selectorRef = useRef<InstrumentSelectorHandles>(null);
   const instrumentScrollRef = useRef<HTMLDivElement>(null);
 
-  // Use the useAuth hook to get the necessary values
-  const { session, isAuthenticated, loading } = useAuth(); // <--- CORRECT USAGE
+  const { session, isAuthenticated, loading } = useAuth();
 
   const handleFileUpload = (file: File | null) => {
     setUploadedFile(file);
@@ -113,6 +114,7 @@ const Index = () => {
 
     setIsProcessing(true);
     setShowResults(false);
+    setTranscriptionResults(null); // Clear previous results when starting a new transcription
 
     const formData = new FormData();
     if (inputType === 'file' && uploadedFile) {
@@ -130,7 +132,8 @@ const Index = () => {
         },
       });
 
-      setTranscriptionResults(response.data);
+      console.log("Transcription successful! Response data:", response.data); // Debugging line
+      setTranscriptionResults(response.data); // This sets the state
       setIsProcessing(false);
       setShowResults(true);
       toast({
@@ -235,14 +238,14 @@ const Index = () => {
         ) : (
           <ResultsSection
             instrument={selectedInstrument}
-            // Pass the original file name or a generated name for YouTube links
-            fileName={uploadedFile?.name || (transcriptionResults?.original_filename || 'Unknown File')}
-            transcriptionData={transcriptionResults}
+            fileName={uploadedFile?.name || 'YouTube Audio'}
+            uploadedFile={uploadedFile}
+            transcriptionData={transcriptionResults} // <--- This is the crucial fix
             onStartOver={() => {
               setShowResults(false);
               setUploadedFile(null);
               setYoutubeUrl('');
-              setTranscriptionResults(null);
+              setTranscriptionResults(null); // Ensure results are cleared when starting over
             }}
           />
         )}
