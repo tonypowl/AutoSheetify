@@ -81,36 +81,43 @@ def convert_midi_to_pdf(midi_path: str, output_dir: str) -> str:
         pdf_filename = os.path.basename(midi_path).rsplit('.', 1)[0] + ".pdf"
         pdf_path = os.path.join(output_dir, pdf_filename)
 
-        # Check if MuseScore is available
+        # Check if MuseScore is available (skip version check in headless environment)
         musescore_commands = ["musescore3", "musescore", "mscore"]
         musescore_command = None
         
         for cmd in musescore_commands:
             try:
-                subprocess.run([cmd, "--version"], check=True, capture_output=True)
-                musescore_command = cmd
-                break
-            except FileNotFoundError:
+                # Check if command exists without running version (which requires display)
+                import shutil
+                if shutil.which(cmd):
+                    musescore_command = cmd
+                    logger.info(f"Found MuseScore command: {cmd}")
+                    break
+            except Exception as e:
+                logger.debug(f"Command {cmd} not available: {e}")
                 continue
         
         if musescore_command is None:
-            raise RuntimeError(
-                "MuseScore not found. Please install MuseScore and ensure it's in your system's PATH."
-                "On macOS, you might need to symlink it or add its installation directory to PATH."
-                "e.g., sudo ln -s /Applications/MuseScore\\ 4.app/Contents/MacOS/mscore /usr/local/bin/musescore"
-            )
+            logger.warning("MuseScore not found. PDF generation will be skipped.")
+            logger.info("Only MIDI file will be available for download.")
+            return None  # Return None to indicate PDF generation was skipped
 
-        # Command to convert MIDI to PDF using MuseScore
-        # -o for output file, -j for headless mode
+        # Command to convert MIDI to PDF using MuseScore in headless mode
+        # Use environment variable to force headless mode and set platform
+        env = os.environ.copy()
+        env["QT_QPA_PLATFORM"] = "offscreen"  # Force headless Qt platform
+        env["DISPLAY"] = ":99"  # Dummy display
+        
         command = [
             musescore_command,
-            "-o", pdf_path,
-            midi_path
+            "--no-gui",          # Disable GUI
+            "-o", pdf_path,      # Output file
+            midi_path            # Input file
         ]
 
         logger.info(f"Executing MuseScore command: {' '.join(command)}")
-        # Execute the command
-        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        # Execute the command with modified environment
+        result = subprocess.run(command, capture_output=True, text=True, check=True, env=env)
         
         logger.info(f"MuseScore stdout: {result.stdout}")
         if result.stderr:
