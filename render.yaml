@@ -5,7 +5,6 @@ services:
     env: docker
     rootDir: ./backend
     dockerfilePath: ./Dockerfile
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --timeout-keep-alive 600
     envVars:
       - key: PYTHON_VERSION
         value: "3.10.12"
