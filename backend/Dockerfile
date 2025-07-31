@@ -10,8 +10,10 @@ RUN apt-get update && apt-get install -y \
     musescore3 \
     git \
     xvfb \
-    qt5-default \
+    qtbase5-dev \
     libqt5gui5 \
+    libqt5core5a \
+    libqt5widgets5 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
