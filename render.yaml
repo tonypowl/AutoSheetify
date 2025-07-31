@@ -27,3 +27,10 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+          envVarKey: SUPABASE_URL
+      - key: SUPABASE_KEY
+        fromService:
+          type: pserv
+          name: autosheetify-backend
+          envVarKey: SUPABASE_KEY
+>>>>>>> b62d60c4f3396d0b93175ceae87b7d6805c19c05

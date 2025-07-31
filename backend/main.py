@@ -21,8 +21,16 @@ origins = [
     "http://localhost:8080",   # your current Vite dev server
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "https://your-production-url.com" # Placeholder for your production URL
+    "https://autosheetify-frontend.onrender.com",  # Production frontend URL
+    "https://*.onrender.com",  # Allow all Render domains for flexibility
 ]
+
+# In production, you might want to be more restrictive with origins
+if os.environ.get("RENDER"):
+    origins.extend([
+        "https://autosheetify-frontend.onrender.com",  # Production frontend URL
+        # Add your custom domain here if you have one
+    ])
 
 app.add_middleware(
     CORSMiddleware,
