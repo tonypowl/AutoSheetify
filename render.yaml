@@ -1,0 +1,29 @@
+services:
+  # Backend Service (FastAPI)
+  - type: web
+    name: autosheetify-backend
+    env: python
+    rootDir: ./backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --timeout-keep-alive 600
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.10.12"
+      # Add your Supabase environment variables in Render Dashboard:
+      # SUPABASE_URL
+      # SUPABASE_KEY
+
+  # Frontend Service (React + Vite)
+  - type: web
+    name: autosheetify-frontend
+    env: static
+    rootDir: ./
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_ENV
+        value: production

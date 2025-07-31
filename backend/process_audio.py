@@ -11,8 +11,12 @@ logger = logging.getLogger(__name__)
 # --- IMPORTANT: Basic-Pitch Model Path ---
 # This path is essential because basic-pitch in your FastAPI environment
 # does not automatically find or download its model.
-# This path points to where you copied the working model within your project.
-BP_MODEL_PATH = "/Users/antonyshibupaul/Downloads/sheet-scribe-automaton-main/models/basic_pitch_model/"
+# For production, we'll use the default model or environment-based path
+BP_MODEL_PATH = os.environ.get('BASIC_PITCH_MODEL_PATH', None)
+if not BP_MODEL_PATH:
+    # Try to use the default basic-pitch model (it will download if needed)
+    from basic_pitch import ICASSP_2022_MODEL_PATH
+    BP_MODEL_PATH = ICASSP_2022_MODEL_PATH
 # --- END MODEL PATH ---
 
 def convert_audio_to_midi(audio_path: str, output_dir: str) -> str:
