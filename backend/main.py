@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Depends, Header, status
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Depends, Header, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 from supabase import create_client, Client
@@ -102,6 +102,7 @@ async def verify_token(authorization: Optional[str] = Header(None)):
 
 @app.post("/transcribe")
 async def transcribe_audio(
+    request: Request,
     file: Optional[UploadFile] = File(None),
     youtube_url: Optional[str] = Form(None),
     instrument: Optional[str] = Form(None),
@@ -226,9 +227,17 @@ async def transcribe_audio(
         pdf_path = convert_midi_to_pdf(midi_path, UPLOADS_DIR)
         print(f"PDF generated: {pdf_path}")
 
-        # Construct URLs for the frontend
-        base_url = "http://localhost:8000" # Or your production backend URL
-        sheet_url = f"{base_url}/static/{os.path.basename(pdf_path)}"
+        # Construct URLs for the frontend - use environment-based URL
+        # Get the base URL from environment or construct from request
+        base_url = os.getenv("BACKEND_URL")
+        
+        # If no environment variable, construct from request
+        if not base_url:
+            scheme = "https" if request.url.scheme == "https" or "onrender.com" in str(request.url.hostname) else "http"
+            port = f":{request.url.port}" if request.url.port and request.url.port not in [80, 443] else ""
+            base_url = f"{scheme}://{request.url.hostname}{port}"
+        
+        sheet_url = f"{base_url}/static/{os.path.basename(pdf_path)}" if pdf_path else None
         midi_url = f"{base_url}/static/{os.path.basename(midi_path)}"
 
         return {
