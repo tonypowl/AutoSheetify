@@ -82,10 +82,18 @@ def convert_midi_to_pdf(midi_path: str, output_dir: str) -> str:
         pdf_path = os.path.join(output_dir, pdf_filename)
 
         # Check if MuseScore is available
-        musescore_command = "musescore"
-        try:
-            subprocess.run([musescore_command, "--version"], check=True, capture_output=True)
-        except FileNotFoundError:
+        musescore_commands = ["musescore3", "musescore", "mscore"]
+        musescore_command = None
+        
+        for cmd in musescore_commands:
+            try:
+                subprocess.run([cmd, "--version"], check=True, capture_output=True)
+                musescore_command = cmd
+                break
+            except FileNotFoundError:
+                continue
+        
+        if musescore_command is None:
             raise RuntimeError(
                 "MuseScore not found. Please install MuseScore and ensure it's in your system's PATH."
                 "On macOS, you might need to symlink it or add its installation directory to PATH."
