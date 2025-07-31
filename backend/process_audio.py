@@ -107,10 +107,14 @@ def convert_midi_to_pdf(midi_path: str, output_dir: str) -> str:
         env = os.environ.copy()
         env["QT_QPA_PLATFORM"] = "offscreen"  # Force headless Qt platform
         env["DISPLAY"] = ":99"  # Dummy display
+        env["XDG_RUNTIME_DIR"] = "/tmp/runtime-root"  # Set XDG runtime directory
         
+        # Create runtime directory if it doesn't exist
+        os.makedirs("/tmp/runtime-root", exist_ok=True)
+        
+        # MuseScore3 command - no --no-gui flag needed, headless mode is automatic with offscreen platform
         command = [
             musescore_command,
-            "--no-gui",          # Disable GUI
             "-o", pdf_path,      # Output file
             midi_path            # Input file
         ]
