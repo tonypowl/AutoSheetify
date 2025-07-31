@@ -109,8 +109,13 @@ def convert_midi_to_pdf(midi_path: str, output_dir: str) -> str:
         env["DISPLAY"] = ":99"  # Dummy display
         env["XDG_RUNTIME_DIR"] = "/tmp/runtime-root"  # Set XDG runtime directory
         
-        # Create runtime directory if it doesn't exist
-        os.makedirs("/tmp/runtime-root", exist_ok=True)
+        # Create runtime directory with correct permissions (0700)
+        runtime_dir = "/tmp/runtime-root"
+        if not os.path.exists(runtime_dir):
+            os.makedirs(runtime_dir, mode=0o700)
+        else:
+            # Fix permissions if directory already exists
+            os.chmod(runtime_dir, 0o700)
         
         # MuseScore3 command - no --no-gui flag needed, headless mode is automatic with offscreen platform
         command = [
