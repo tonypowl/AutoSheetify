@@ -1,0 +1,34 @@
+services:
+  # Frontend Service (React + Vite)
+  - type: web
+    name: autosheetify-frontend
+    env: static
+    rootDir: ./
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+  # Backend Service (FastAPI)
+  - type: web
+    name: autosheetify-backend
+    env: python
+    rootDir: ./backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SUPABASE_URL
+        fromService:
+          type: pserv
+          name: autosheetify-backend
+          envVarKey: SUPABASE_URL
+      - key: SUPABASE_KEY
+        fromService:
+          type: pserv
+          name: autosheetify-backend
+          envVarKey: SUPABASE_KEY

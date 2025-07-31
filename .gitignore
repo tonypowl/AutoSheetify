@@ -12,6 +12,24 @@ dist
 dist-ssr
 *.local
 
+# Environment files
+.env
+.env.local
+.env.*.local
+backend/supabase_backend.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+.env/
+backend/uploads/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -13,6 +13,7 @@ import Navigation from '@/components/Navigation';
 import HowItWorks from '@/components/HowItWorks';
 import axios from 'axios';
 import { useAuth } from '@/contexts/AuthContext';
+import { config } from '@/lib/config';
 
 // Import the TranscriptionData type/interface from ResultsSection to type transcriptionResults
 import type { TranscriptionData } from '@/components/ResultsSection';
@@ -125,7 +126,7 @@ const Index = () => {
     formData.append('instrument', selectedInstrument);
 
     try {
-      const response = await axios.post('http://localhost:8000/transcribe', formData, {
+      const response = await axios.post(`${config.apiUrl}/transcribe`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${session.access_token}`
