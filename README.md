@@ -40,13 +40,10 @@ https://github.com/user-attachments/assets/f09c5a8d-52a4-433e-83a9-15ccddb86471
 
 # Clone the repo
 git clone https://github.com/<YOUR_USERNAME>/<YOUR_REPO>.git
-cd <YOUR_REPO>
 
 # Build Docker image
 docker build -t autosheetify .
 
-# Run container
-docker run -p 8000:8000 autosheetify
 
 
 
